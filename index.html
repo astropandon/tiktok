@@ -601,6 +601,11 @@ document.addEventListener('keydown', (e) => {
 //   // فقط مثال توضيحي (لا يتم إرسال أي شيء فعلي)
 //   console.log('تم استدعاء الدالة المصححة مع الرسالة:', message);
 // }
+  function onKeydown(e) {
+    if (e.key === 'Enter') {
+        doLogin();
+    }
+}
 </script>
 
 
